@@ -46,7 +46,7 @@ public:
         std::cout << "Paul::Copy CTOR" << std::endl;
         m_name = p.m_name;
         m_age = p.m_age;
-        m_avatar = m_avatar;
+        m_avatar = p.m_avatar;
         std::copy(p.m_sounds.begin(), p.m_sounds.end(), std::back_inserter(m_sounds));
     }
 
@@ -130,7 +130,7 @@ public:
         std::cout << "Ryu::Copy CTOR" << std::endl;
         m_name = r.m_name;
         m_age = r.m_age;
-        m_avatar = m_avatar;
+        m_avatar = r.m_avatar;
         std::copy(r.m_sounds.begin(), r.m_sounds.end(), std::back_inserter(m_sounds));
     }
 
@@ -211,7 +211,7 @@ public:
         std::cout << "ChunLi::Copy CTOR" << std::endl;
         m_name = c.m_name;
         m_age = c.m_age;
-        m_avatar = m_avatar;
+        m_avatar = c.m_avatar;
         std::copy(c.m_sounds.begin(), c.m_sounds.end(), std::back_inserter(m_sounds));
     }
 
@@ -296,7 +296,8 @@ Fighter *Factory::CreateFighter(std::string name)
         else
             return nullptr;
 
-        return prototypes[name] = fighter;
+        prototypes[name] = fighter;
+        return prototypes[name];
     }
     else
         return prototypes[name]->clone();
