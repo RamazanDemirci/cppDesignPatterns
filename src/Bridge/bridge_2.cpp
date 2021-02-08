@@ -206,6 +206,44 @@ int main()
 }
 
 /*
+This example kartezyan problem:
+First group : Rail Train, MonoRail Train, (Fast Train)
+Second group : Electric Engine Train, Diesel Engine Train, (Steam Engine Train)
+
+inheritance solution : 2*2
+train
+
+rail:train
+dieselRail: rain
+electricalRail: rain
+(steamRailRail: rain)
+
+monoRail:train
+dieselMonoRail: monoRail
+electricalMonoRail: monoRail
+(steamMonoRail: monoRail)
+
+(fastRail:train
+dieselMonoRail: fastRail
+electricalMonoRail: fastRail
+steamFastRail: fastRail)
+
+composition solution(bridge):
+
+Engine
+ElectricEngine: Engine
+DieselEngine : Engine
+(SteamEngine : Engine)
+
+Train
+MonoRail:Train
+Rail:Train
+(FastRail:Train)
+
+as you can see above example inheritance way is inefficient. each include new type of train or engine we generate many class.
+in the other hand, composition solution we decouple two group and we just generate new type of engine and train class. 
+ 
+
 
 Bridge Pattern : Pointer to Implementation
 
