@@ -2,10 +2,10 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
-
+#include <random>
 #include <map>
 
-#define f(n) for (int o = 0; o < n; o++)
+#define f(n) for (int i = 0; i < n; i++)
 
 enum Weapon
 {
@@ -81,17 +81,25 @@ std::string strStrategy(Strategy s)
     }
 }
 
-class Soldier
+double gen(double size)
+{
+    std::random_device rd;
+
+    std::mt19937 gen(rd());
+
+    std::uniform_real_distribution<> dis(1.0f, size);
+    return dis(gen);
+}
+
+class SoldierModel
 {
     Weapon m_weapon;
     Strategy m_strategy;
     std::string m_company;
+    double m_width;
+    double m_height;
 
 public:
-    Soldier(std::string company)
-    {
-        m_company = company;
-    }
     std::string getCompany()
     {
         return m_company;
@@ -116,82 +124,208 @@ public:
     {
         m_strategy = s;
     }
+    void getDutyArea(double &w, double &h)
+    {
+        w = m_width;
+        h = m_height;
+    }
+    void setDutyArea(double w, double h)
+    {
+        m_width = w;
+        m_height = h;
+    }
+
+public:
+};
+
+class Soldier
+{
+    double m_posx;
+    double m_posy;
+
+    SoldierModel *m_soldierModel;
+
+public:
+    Soldier(SoldierModel *model)
+    {
+        m_soldierModel = model;
+    }
+    void getPosition(double &x, double &y)
+    {
+        x = m_posx;
+        y = m_posy;
+    }
+
+    void setPosition(double x, double y)
+    {
+        m_posx = x;
+        m_posy = x;
+    }
+
+    void setSoldierModel(SoldierModel *model)
+    {
+        m_soldierModel = model;
+    }
+
+    SoldierModel *getSoldierModel()
+    {
+        return m_soldierModel;
+    }
 
     void performMission()
     {
-        std::cout << "I am a soldier of " << m_company << "my duty is " << strStrategy(m_strategy) << " and i have weapon " << strWeapon(m_weapon) << std::endl;
+        std::cout << "Mission completed " << m_soldierModel->getCompany() << std::endl;
+    }
+
+    void reportYourself()
+    {
+        std::cout << "I am a soldier of " << m_soldierModel->getCompany()
+                  << " my duty is " << strStrategy(m_soldierModel->getStrategy())
+                  << " and i have weapon " << strWeapon(m_soldierModel->getWeapon())
+                  << " my position is : [" << m_posx << "," << m_posy << "] "
+                  << "Sir!"
+                  << std::endl;
     }
 };
 
 class SoldierFactory
 {
-    static std::unordered_map<std::string, Soldier *> m_soldiers;
+    std::unordered_map<std::string, SoldierModel *> m_soldierModels;
 
 public:
-    static Soldier *getSoldier(std::string company)
+    ~SoldierFactory()
     {
-        if (m_soldiers.find(company) == m_soldiers.end())
+        while (!m_soldierModels.empty())
         {
-            m_soldiers[company] = new Soldier(company);
+            auto it = m_soldierModels.begin();
+            delete it->second;
+            m_soldierModels.erase(it);
+        }
+    }
+
+    Soldier *getSoldier(std::string company)
+    {
+        if (m_soldierModels.find(company) == m_soldierModels.end())
+        {
+            std::cout << "Upps! There is no such that company : " << company << std::endl;
+            return nullptr;
         }
 
-        return m_soldiers[company];
+        return new Soldier(m_soldierModels[company]);
+    }
+
+    void createSoldier(SoldierModel *sm)
+    {
+        m_soldierModels[sm->getCompany()] = sm;
     }
 };
 
-std::unordered_map<std::string, Soldier *> SoldierFactory::m_soldiers{};
-
-void MachineDefense(Soldier *s)
+void setStartPosition(Soldier *s)
 {
-    s->setWeapon(Weapon::M1919A4);
-    s->setStrategy(Strategy::Defensive_Fortification);
-    s->performMission();
+    double w;
+    double h;
+    s->getSoldierModel()->getDutyArea(w, h);
+    s->setPosition(gen(w), gen(h));
 }
 
-void Charge(Soldier *s)
+void updatePosition(Soldier *s)
 {
-    s->setWeapon(Weapon::M1_Garand);
-    s->setStrategy(Strategy::Offensive_Charge);
-    s->performMission();
+    double x;
+    double y;
+    s->getPosition(x, y);
+    s->setPosition(x + gen(2), y + gen(2));
 }
 
-void Paris(Soldier *s)
+void reportCompany(std::vector<Soldier *> company)
 {
-    s->setWeapon(Weapon::Luger_P08);
-    s->setStrategy(Strategy::Deceptive_Disinformation);
-    s->performMission();
+    std::for_each(company.begin(), company.end(), [](Soldier *s) {
+        s->reportYourself();
+    });
 }
 
-void DDay(Soldier *s)
+void Mission(std::string mission, std::vector<Soldier *> &company)
 {
-    s->setWeapon(Weapon::M1_Garand);
-    s->setStrategy(Strategy::Offensive_Ambush);
-    s->performMission();
+
+    std::cout << mission << " Mission Start " << std::endl;
+
+    std::for_each(company.begin(), company.end(), [](Soldier *s) {
+        setStartPosition(s);
+        s->performMission();
+        updatePosition(s);
+    });
+
+    reportCompany(company);
 }
 
 int main()
 {
+    std::cout << "hello";
 
-    f(180)
+    auto soldierFactory = new SoldierFactory();
+
+    auto sm = new SoldierModel();
+    sm->setCompany("Easy Company");
+    sm->setDutyArea(40.0f, 20.0f);
+    sm->setWeapon(Weapon::M1_Garand);
+    sm->setStrategy(Strategy::Offensive_Charge);
+    soldierFactory->createSoldier(sm);
+
+    sm->setCompany("Rangers Company");
+    sm->setDutyArea(80.0f, 10.0f);
+    sm->setWeapon(Weapon::M1919A4);
+    sm->setStrategy(Strategy::Defensive_Fortification);
+    soldierFactory->createSoldier(sm);
+
+    sm->setCompany("Flash Company");
+    sm->setDutyArea(200.0f, 50.0f);
+    sm->setWeapon(Weapon::Smoke_Grenade);
+    sm->setStrategy(Strategy::Deceptive_FalseFlag);
+    soldierFactory->createSoldier(sm);
+
+    sm->setCompany("Wariors Company");
+    sm->setDutyArea(40.0f, 150.0f);
+    sm->setWeapon(Weapon::Luger_P08);
+    sm->setStrategy(Strategy::Offensive_Ambush);
+    soldierFactory->createSoldier(sm);
+
+    std::vector<Soldier *> easyCompany;
+    std::vector<Soldier *> rangerCompany;
+    std::vector<Soldier *> flashCompany;
+    std::vector<Soldier *> wariorsCompany;
+
+    f(18)
     {
-        auto soldier = SoldierFactory::getSoldier("Easy Company");
-        DDay(soldier);
-    }
-    f(120)
-    {
-        auto soldier = SoldierFactory::getSoldier("Rangers Company");
-        MachineDefense(soldier);
+        auto soldier = soldierFactory->getSoldier("Easy Company");
+        easyCompany.push_back(soldier);
     }
 
-    f(152)
+    f(12)
     {
-        auto soldier = SoldierFactory::getSoldier("Flash Company");
-        Charge(soldier);
+        auto soldier = soldierFactory->getSoldier("Rangers Company");
+        rangerCompany.push_back(soldier);
     }
 
-    f(200)
+    f(15)
     {
-        auto soldier = SoldierFactory::getSoldier("Wariors Company");
-        Paris(soldier);
+        auto soldier = soldierFactory->getSoldier("Flash Company");
+        flashCompany.push_back(soldier);
     }
+
+    f(20)
+    {
+        auto soldier = soldierFactory->getSoldier("Wariors Company");
+        wariorsCompany.push_back(soldier);
+    }
+
+    Mission("DDay", easyCompany);
+    Mission("Paris", flashCompany);
+    Mission("MachineDefense", rangerCompany);
+    Mission("Charge", wariorsCompany);
 }
+
+/*
+
+
+refs :
+https://gameprogrammingpatterns.com/flyweight.html
+*/
